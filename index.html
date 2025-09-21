@@ -15,29 +15,39 @@
       align-items: center;
       height: 100vh;
       overflow: hidden;
-      text-align: center;
     }
     .wrapper {
       position: relative;
       cursor: pointer;
-      max-width: 900px;
+      max-width: 1000px;
       width: 100%;
     }
     .wrapper img {
       width: 100%;
       height: auto;
       display: block;
+      filter: brightness(0.85);
     }
     .text {
       position: absolute;
-      inset: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-      font-size: clamp(18px, 2vw, 28px);
-      font-weight: bold;
-      text-shadow: 0 2px 6px rgba(0,0,0,0.7);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 20px 30px;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(6px);
+      border-radius: 16px;
+      font-size: clamp(20px, 2.5vw, 36px);
+      font-weight: 700;
+      text-align: center;
+      line-height: 1.3;
+      text-shadow: 0 0 12px rgba(255, 186, 8, 0.8), 0 0 24px rgba(255, 186, 8, 0.4);
+      animation: fadeIn 2s ease forwards;
+      opacity: 0;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translate(-50%, -40%); }
+      to { opacity: 1; transform: translate(-50%, -50%); }
     }
     .overlay {
       position: fixed;
@@ -59,7 +69,7 @@
 <body>
   <div class="wrapper" id="launch">
     <img src="timemachine.png" alt="Машина времени" />
-    <div class="text">Запусти машину времени, чтобы начать своё путешествие по музыкальным эпохам</div>
+    <div class="text">Запусти машину времени,<br>чтобы начать своё путешествие<br>по музыкальным эпохам</div>
   </div>
 
   <div class="overlay" id="overlay">
