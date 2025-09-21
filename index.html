@@ -3,107 +3,73 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Машина времени — музыкальные эпохи</title>
+  <title>Машина времени</title>
   <style>
-    :root{
-      --bg:#0b0b0f; --text:#f5f5f7; --accent:#ffba08;
-      --shadow:0 10px 30px rgba(0,0,0,.35);
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: #000;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      text-align: center;
     }
-    *{box-sizing:border-box}
-    body{
-      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
-      color:var(--text); background:linear-gradient(180deg,#0b0b0f 0%, #121218 100%);
-      min-height:100svh; display:grid; place-items:center; padding:24px;
+    .wrapper {
+      position: relative;
+      cursor: pointer;
+      max-width: 900px;
+      width: 100%;
     }
-    .card{
-      width:min(100%, 980px); position:relative; border-radius:24px; overflow:hidden;
-      box-shadow:var(--shadow); background:#111;
-      border:1px solid rgba(255,255,255,.06)
+    .wrapper img {
+      width: 100%;
+      height: auto;
+      display: block;
     }
-    .hero{
-      position:relative; cursor:pointer; isolation:isolate;
+    .text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      font-size: clamp(18px, 2vw, 28px);
+      font-weight: bold;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.7);
     }
-    .hero img{
-      width:100%; height:clamp(260px, 45vw, 520px); object-fit:cover; display:block;
-      filter:saturate(1.05) contrast(1.02) brightness(.95);
-      transition:transform .6s cubic-bezier(.2,.8,.2,1), filter .3s ease;
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.9);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
     }
-    .hero::after{
-      content:""; position:absolute; inset:0;
-      background:radial-gradient(60% 80% at 50% 50%, rgba(255,255,255,.04), transparent 60%);
-      pointer-events:none;
-    }
-    .hero:hover img{ transform:scale(1.02); filter:brightness(.98)}
-    .cta{
-      position:absolute; inset:auto 0 0 0; padding:20px 24px 24px; display:flex; gap:16px;
-      align-items:center; justify-content:space-between; background:linear-gradient(180deg,transparent,rgba(0,0,0,.55));
-    }
-    .cta h1{
-      margin:0; font-size:clamp(20px, 2.4vw, 28px); font-weight:700; line-height:1.2;
-    }
-    .cta .btn{
-      white-space:nowrap; padding:12px 18px; border-radius:999px; border:none; color:#111;
-      background:var(--accent); font-weight:700; cursor:pointer; box-shadow:0 6px 16px rgba(255,186,8,.35);
-    }
-    .meta{
-      padding:14px 20px; font-size:14px; color:#c9cad1; display:flex; justify-content:space-between; gap:10px;
-    }
-    .small-link{ color:#9aa0a6; text-decoration:underline; cursor:pointer }
-    /* Overlay */
-    .overlay{
-      position:fixed; inset:0; background:rgba(0,0,0,.85);
-      display:none; align-items:center; justify-content:center; z-index:50; padding:20px;
-    }
-    .overlay.active{ display:flex }
-    .player{
-      width:min(100%, 960px); border-radius:16px; overflow:hidden; box-shadow:var(--shadow);
-      background:#000; position:relative;
-    }
-    video{ width:100%; height:auto; display:block; }
-    .controls{
-      position:absolute; inset:auto 12px 12px auto; display:flex; gap:8px;
-    }
-    .skip, .close{
-      appearance:none; border:none; border-radius:10px; padding:10px 14px; font-weight:700; cursor:pointer;
-      background:rgba(255,255,255,.9); color:#111;
-    }
-    .close{ background:rgba(255,255,255,.7)}
-    @media (prefers-reduced-motion: reduce){
-      .hero img{ transition:none }
+    .overlay.active { display: flex; }
+    video {
+      width: 100%;
+      max-width: 960px;
+      border-radius: 10px;
     }
   </style>
 </head>
 <body>
-  <main class="card">
-    <div class="hero" id="launch">
-      <img src="timemachine.png" alt="Машина времени — панель управления" />
-      <div class="cta">
-        <h1>Запусти машину времени, чтобы начать своё путешествие по музыкальным эпохам</h1>
-        <button class="btn" type="button">Запустить</button>
-      </div>
-    </div>
-    <div class="meta">
-      <span>7 тренировок • без повторов</span>
-      <span class="small-link" id="reset">Сбросить прогресс</span>
-    </div>
-  </main>
+  <div class="wrapper" id="launch">
+    <img src="timemachine.png" alt="Машина времени" />
+    <div class="text">Запусти машину времени, чтобы начать своё путешествие по музыкальным эпохам</div>
+  </div>
 
-  <!-- Overlay + Video -->
-  <section class="overlay" id="overlay" aria-hidden="true">
-    <div class="player">
-      <video id="introVideo" preload="auto" playsinline>
-        <source src="intro.mp4" type="video/mp4" />
-        Ваш браузер не поддерживает видео.
-      </video>
-      <div class="controls">
-        <button class="skip" type="button" id="skipBtn">Пропустить видео</button>
-        <button class="close" type="button" id="closeBtn" aria-label="Закрыть">×</button>
-      </div>
-    </div>
-  </section>
+  <div class="overlay" id="overlay">
+    <video id="introVideo" preload="auto" playsinline>
+      <source src="intro.mp4" type="video/mp4" />
+      Ваш браузер не поддерживает видео.
+    </video>
+  </div>
 
   <script>
-    // ==== Настройка: ссылки на уроки ====
     const LESSON_URLS = [
       "https://example.com/lesson-1",
       "https://example.com/lesson-2",
@@ -113,91 +79,51 @@
       "https://example.com/lesson-6",
       "https://example.com/lesson-7",
     ];
-
     const STORAGE_KEY = "music_epochs_seen_v1";
 
-    const getSeen = () => {
+    const overlay = document.getElementById("overlay");
+    const launch = document.getElementById("launch");
+    const video = document.getElementById("introVideo");
+
+    function getSeen() {
       try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
       catch { return []; }
-    };
-
-    const saveSeen = (arr) => {
+    }
+    function saveSeen(arr) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
-    };
-
-    const getRemaining = () => {
+    }
+    function getRemaining() {
       const seen = new Set(getSeen());
       return LESSON_URLS.filter(url => !seen.has(url));
-    };
-
-    const pickRandom = (arr) => arr[Math.floor(Math.random()*arr.length)];
-
+    }
+    function pickRandom(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
     function getNextLessonUrl() {
       let remaining = getRemaining();
       if (remaining.length === 0) {
-        alert("Вы прошли все эпохи! Начинаем новый круг ✨");
         localStorage.removeItem(STORAGE_KEY);
         remaining = [...LESSON_URLS];
       }
       return pickRandom(remaining);
     }
-
     function markSeen(url) {
       const seen = new Set(getSeen());
       seen.add(url);
       saveSeen([...seen]);
     }
 
-    const overlay = document.getElementById("overlay");
-    const launch = document.getElementById("launch");
-    const video  = document.getElementById("introVideo");
-    const skipBtn = document.getElementById("skipBtn");
-    const closeBtn = document.getElementById("closeBtn");
-    const resetBtn = document.getElementById("reset");
-
-    function openOverlay(){
+    launch.addEventListener("click", () => {
       overlay.classList.add("active");
-      overlay.setAttribute("aria-hidden","false");
       video.currentTime = 0;
-      const playPromise = video.play();
-      if (playPromise && typeof playPromise.then === "function") {
-        playPromise.catch(() => {
-          console.log("Автовоспроизведение отклонено, пользователь должен нажать Play.");
-        });
-      }
-    }
-
-    function closeOverlay(){
-      overlay.classList.remove("active");
-      overlay.setAttribute("aria-hidden","true");
-      video.pause();
-    }
+      video.play().catch(() => {});
+    });
 
     video.addEventListener("ended", () => {
       const url = getNextLessonUrl();
       markSeen(url);
       window.location.href = url;
     });
-
-    skipBtn.addEventListener("click", () => {
-      const url = getNextLessonUrl();
-      markSeen(url);
-      window.location.href = url;
-    });
-
-    closeBtn.addEventListener("click", closeOverlay);
-    launch.addEventListener("click", openOverlay);
-
-    resetBtn.addEventListener("click", () => {
-      if (confirm("Сбросить прогресс прохождения 7 уроков?")) {
-        localStorage.removeItem(STORAGE_KEY);
-        alert("Прогресс сброшен.");
-      }
-    });
-
-    if (!Array.isArray(LESSON_URLS) || LESSON_URLS.length < 1) {
-      console.error("Нужно указать минимум 1 ссылку в LESSON_URLS.");
-    }
   </script>
 </body>
 </html>
