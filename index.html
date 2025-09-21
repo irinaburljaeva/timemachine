@@ -40,11 +40,11 @@
       opacity: 1;
       pointer-events: auto;
     }
+
+    /* Базовые стили текста */
     .text {
       position: absolute;
-      bottom: 8%;
       left: 50%;
-      transform: translateX(-50%);
       max-width: 85%;
       padding: 10px 16px;
       background: rgba(0, 0, 0, 0.45);
@@ -55,11 +55,26 @@
       text-align: center;
       line-height: 1.3;
       text-shadow: 0 0 6px rgba(255, 186, 8, 0.6);
-      transition: opacity 0.6s ease;
+      transition: opacity 0.6s ease, transform 0.3s ease;
+      transform: translateX(-50%);
     }
-    .text.hidden {
-      opacity: 0;
+    /* Мобильные: держим текст внизу */
+    @media (max-width: 768px) {
+      .text {
+        bottom: 8%;
+        top: auto;
+        transform: translateX(-50%);
+      }
     }
+    /* Десктоп: по центру изображения */
+    @media (min-width: 769px) {
+      .text {
+        top: 50%;
+        bottom: auto;
+        transform: translate(-50%, -50%);
+      }
+    }
+    .text.hidden { opacity: 0; }
   </style>
 </head>
 <body>
@@ -74,6 +89,7 @@
   </div>
 
   <script>
+    // Укажите реальные ссылки на уроки
     const LESSON_URLS = [
       "https://example.com/lesson-1",
       "https://example.com/lesson-2",
@@ -117,13 +133,15 @@
       saveSeen([...seen]);
     }
 
+    // Старт: показываем видео поверх изображения и скрываем текст
     wrapper.addEventListener("click", () => {
       video.classList.add("active");
-      textBlock.classList.add("hidden"); // скрываем текст
+      textBlock.classList.add("hidden");
       video.currentTime = 0;
       video.play().catch(() => {});
     });
 
+    // Конец видео: переход на новый урок без повторов
     video.addEventListener("ended", () => {
       const url = getNextLessonUrl();
       markSeen(url);
