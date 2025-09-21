@@ -41,44 +41,89 @@
       pointer-events: auto;
     }
 
-    /* Базовые стили текста */
+    /* Текст с пульсацией */
     .text {
       position: absolute;
       left: 50%;
       max-width: 85%;
       padding: 10px 16px;
-      background: rgba(0, 0, 0, 0.45);
+      background: rgba(0, 0, 0, 0.38);
       backdrop-filter: blur(3px);
       border-radius: 10px;
       font-size: clamp(14px, 1.6vw, 20px);
       font-weight: 600;
       text-align: center;
       line-height: 1.3;
-      text-shadow: 0 0 6px rgba(255, 186, 8, 0.6);
+      color: #fff;
+      text-shadow:
+        0 0 6px rgba(255, 186, 8, 0.6),
+        0 0 14px rgba(255, 200, 50, 0.35),
+        0 0 28px rgba(255, 220, 90, 0.2);
       transition: opacity 0.6s ease, transform 0.3s ease;
       transform: translateX(-50%);
+      animation: pulseGlow 2.2s ease-in-out infinite;
     }
-    /* Мобильные: держим текст внизу */
+    @keyframes pulseGlow {
+      0%, 100% {
+        text-shadow:
+          0 0 6px rgba(255,186,8,.65),
+          0 0 14px rgba(255,200,50,.35),
+          0 0 28px rgba(255,220,90,.18);
+        filter: brightness(1);
+      }
+      50% {
+        text-shadow:
+          0 0 10px rgba(255,200,80,.9),
+          0 0 22px rgba(255,210,90,.55),
+          0 0 44px rgba(255,235,160,.35);
+        filter: brightness(1.06);
+      }
+    }
     @media (max-width: 768px) {
-      .text {
-        top: 50%;
-        bottom: auto;
-        transform: translate(-50%, -50%);
-      }
+      .text { bottom: 8%; top: auto; transform: translateX(-50%); }
     }
-    /* Десктоп: по центру изображения */
     @media (min-width: 769px) {
-      .text {
-        top: 50%;
-        bottom: auto;
-        transform: translate(-50%, -50%);
-      }
+      .text { top: 50%; bottom: auto; transform: translate(-50%, -50%); }
+      .wrapper:hover .text { transform: translate(-50%, -50%) scale(1.01); }
     }
     .text.hidden { opacity: 0; }
+
+    /* Подсказчик */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(255, 186, 8, 0.95);
+      color: #111;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 6px 20px rgba(0,0,0,.4);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(30px);
+      transition: opacity .4s ease, transform .4s ease;
+      z-index: 100;
+    }
+    .toast.show {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+    .toast button {
+      margin-left: 10px;
+      background: none;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      color: #111;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
-  <div class="wrapper" id="launch">
+  <div class="wrapper" id="launch" aria-label="Запустить машину времени">
     <img src="timemachine.webp" alt="Машина времени" />
     <video id="introVideo" preload="auto" playsinline poster="timemachine.webp">
       <source src="intro.mp4" type="video/mp4" />
@@ -88,8 +133,13 @@
     </div>
   </div>
 
+  <!-- Подсказчик -->
+  <div class="toast" id="toast">
+    Эпоха дня назначена. Следующая будет доступна завтра ✨
+    <button id="toastClose" aria-label="Закрыть">×</button>
+  </div>
+
   <script>
-    // Укажите реальные ссылки на уроки
     const LESSON_URLS = [
       "https://example.com/lesson-1",
       "https://example.com/lesson-2",
@@ -99,18 +149,26 @@
       "https://example.com/lesson-6",
       "https://example.com/lesson-7",
     ];
-    const STORAGE_KEY = "music_epochs_seen_v1";
+    const STORAGE_KEY_SEEN = "music_epochs_seen_v1";
+    const STORAGE_KEY_DAILY = "music_epochs_daily_v1";
 
     const wrapper = document.getElementById("launch");
     const video = document.getElementById("introVideo");
     const textBlock = document.getElementById("textBlock");
+    const toast = document.getElementById("toast");
+    const toastClose = document.getElementById("toastClose");
+
+    const todayStr = () => {
+      const d = new Date();
+      return d.toISOString().split("T")[0]; // YYYY-MM-DD
+    };
 
     function getSeen() {
-      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY_SEEN)) || []; }
       catch { return []; }
     }
     function saveSeen(arr) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+      localStorage.setItem(STORAGE_KEY_SEEN, JSON.stringify(arr));
     }
     function getRemaining() {
       const seen = new Set(getSeen());
@@ -119,21 +177,53 @@
     function pickRandom(arr) {
       return arr[Math.floor(Math.random() * arr.length)];
     }
-    function getNextLessonUrl() {
+
+    function getDaily() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY_DAILY)) || null; }
+      catch { return null; }
+    }
+    function setDaily(obj) {
+      localStorage.setItem(STORAGE_KEY_DAILY, JSON.stringify(obj));
+    }
+
+    function getOrAssignTodayLessonUrl() {
+      const today = todayStr();
+      const daily = getDaily();
+
+      if (daily && daily.date === today && daily.url) {
+        // Уже есть эпоха сегодня
+        showToast();
+        return daily.url;
+      }
+
       let remaining = getRemaining();
       if (remaining.length === 0) {
-        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(STORAGE_KEY_SEEN);
         remaining = [...LESSON_URLS];
       }
-      return pickRandom(remaining);
-    }
-    function markSeen(url) {
+      const url = pickRandom(remaining);
+
       const seen = new Set(getSeen());
       seen.add(url);
       saveSeen([...seen]);
+
+      setDaily({ date: today, url });
+      showToast();
+      return url;
     }
 
-    // Старт: показываем видео поверх изображения и скрываем текст
+    // Подсказчик
+    function showToast() {
+      toast.classList.add("show");
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, 5000);
+    }
+    toastClose.addEventListener("click", () => {
+      toast.classList.remove("show");
+    });
+
+    // Запуск
     wrapper.addEventListener("click", () => {
       video.classList.add("active");
       textBlock.classList.add("hidden");
@@ -141,10 +231,8 @@
       video.play().catch(() => {});
     });
 
-    // Конец видео: переход на новый урок без повторов
     video.addEventListener("ended", () => {
-      const url = getNextLessonUrl();
-      markSeen(url);
+      const url = getOrAssignTodayLessonUrl();
       window.location.href = url;
     });
   </script>
