@@ -140,23 +140,25 @@
   </div>
 
   <script>
+    // ссылки на уроки (день 1..7)
     const LESSON_URLS = [
-      "https://example.com/lesson-1",
-      "https://example.com/lesson-2",
-      "https://example.com/lesson-3",
-      "https://example.com/lesson-4",
-      "https://example.com/lesson-5",
-      "https://example.com/lesson-6",
-      "https://example.com/lesson-7",
+      "https://my.walk-walk.ru/pl/teach/control/lesson/view?id=344711518&editMode=0",
+      "https://my.walk-walk.ru/pl/teach/control/lesson/view?id=344711519",
+      "https://my.walk-walk.ru/pl/teach/control/lesson/view?id=344711520",
+      "https://my.walk-walk.ru/pl/teach/control/lesson/view?id=344711521",
+      "https://my.walk-walk.ru/pl/teach/control/lesson/view?id=344711522",
+      "https://my.walk-walk.ru/pl/teach/control/lesson/view?id=344711523",
+      "https://my.walk-walk.ru/pl/teach/control/lesson/view?id=344711524",
     ];
-    const STORAGE_KEY_SEEN = "music_epochs_seen_v1";
+
+    const STORAGE_KEY_SEEN  = "music_epochs_seen_v1";
     const STORAGE_KEY_DAILY = "music_epochs_daily_v1";
 
-    const wrapper = document.getElementById("launch");
-    const video = document.getElementById("introVideo");
+    const wrapper   = document.getElementById("launch");
+    const video     = document.getElementById("introVideo");
     const textBlock = document.getElementById("textBlock");
-    const toast = document.getElementById("toast");
-    const toastClose = document.getElementById("toastClose");
+    const toast     = document.getElementById("toast");
+    const toastClose= document.getElementById("toastClose");
 
     const todayStr = () => {
       const d = new Date();
@@ -186,13 +188,17 @@
       localStorage.setItem(STORAGE_KEY_DAILY, JSON.stringify(obj));
     }
 
+    function showToast() {
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 5000);
+    }
+    toastClose.addEventListener("click", () => toast.classList.remove("show"));
+
     function getOrAssignTodayLessonUrl() {
       const today = todayStr();
       const daily = getDaily();
-
       if (daily && daily.date === today && daily.url) {
-        // Уже есть эпоха сегодня
-        showToast();
+        showToast(); // уже назначено сегодня
         return daily.url;
       }
 
@@ -212,18 +218,7 @@
       return url;
     }
 
-    // Подсказчик
-    function showToast() {
-      toast.classList.add("show");
-      setTimeout(() => {
-        toast.classList.remove("show");
-      }, 5000);
-    }
-    toastClose.addEventListener("click", () => {
-      toast.classList.remove("show");
-    });
-
-    // Запуск
+    // запуск: накладываем видео и скрываем текст
     wrapper.addEventListener("click", () => {
       video.classList.add("active");
       textBlock.classList.add("hidden");
@@ -231,10 +226,20 @@
       video.play().catch(() => {});
     });
 
+    // конец видео: переходим на "эпоху дня"
     video.addEventListener("ended", () => {
       const url = getOrAssignTodayLessonUrl();
       window.location.href = url;
     });
+
+    // необязательно: показывать подсказчик сразу при загрузке,
+    // если эпоха на сегодня уже назначена
+    (function showToastIfAlreadyAssignedToday(){
+      const daily = getDaily();
+      if (daily && daily.date === todayStr() && daily.url) {
+        showToast();
+      }
+    })();
   </script>
 </body>
 </html>
