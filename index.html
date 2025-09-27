@@ -5,24 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Машина времени — embed</title>
   <style>
-    /* Минимальные сбросы — БЕЗ полноэкранного 100vh */
     html,body{margin:0;padding:0}
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;color:#fff}
 
-    /* Рамка подстраивается под высоту изображения */
     .frame{
       position: relative;
-      display: inline-block;     /* чтобы высота бралась от картинки */
+      display: block;            /* блочный контейнер */
       width: 100%;
       max-width: 900px;
-      line-height: 0;            /* убираем возможные «щели» */
+      margin: 0 auto;
       border-radius: 12px;
       overflow: hidden;
       cursor: pointer;
-      background: transparent;   /* без чёрного фона вокруг */
+      line-height: 0;            /* нет лишних «щелей» */
+      background: transparent;   /* пусть просвечивает фон платформы */
     }
 
-    /* Картинка задаёт высоту блока */
+    /* Картинка задаёт «эталонную» высоту */
     .frame img{
       width: 100%;
       height: auto;
@@ -30,21 +29,22 @@
       border-radius: 12px;
     }
 
-    /* Видео поверх картинки 1:1, без «приближения» */
+    /* Видео строго в тех же границах */
     .frame video{
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
-      object-fit: cover;         /* заполняем картинку без полос */
+      object-fit: cover;
       border-radius: 12px;
       opacity: 0;
       transition: opacity .45s ease;
       pointer-events: none;
+      background: transparent;
     }
     .frame video.active{ opacity:1; pointer-events:auto }
 
-    /* Текст-подсказка с «электрическим» свечением */
+    /* Текст с «электросвечением» */
     .text{
       position: absolute;
       left: 50%;
@@ -70,29 +70,16 @@
       0%,100%{text-shadow:0 0 6px rgba(255,186,8,.65),0 0 14px rgba(255,200,50,.35),0 0 28px rgba(255,220,90,.18)}
       50%{text-shadow:0 0 10px rgba(255,200,80,.9),0 0 22px rgba(255,210,90,.55),0 0 44px rgba(255,235,160,.35)}
     }
-
-    /* Мобайл: текст внизу и чуть мельче */
     @media (max-width: 768px){
-      .text{
-        bottom: 6%;
-        top: auto;
-        font-size: clamp(14px, 3.6vw, 18px);
-        transform: translateX(-50%);
-      }
+      .text{ bottom:6%; top:auto; font-size: clamp(14px, 3.6vw, 18px); transform: translateX(-50%); }
     }
-    /* Десктоп: строго по центру */
     @media (min-width: 769px){
-      .text{
-        top: 50%;
-        bottom: auto;
-        font-size: clamp(16px, 1.4vw, 22px);
-        transform: translate(-50%, -50%);
-      }
+      .text{ top:50%; bottom:auto; font-size: clamp(16px, 1.4vw, 22px); transform: translate(-50%, -50%); }
       .frame:hover .text{ transform: translate(-50%, -50%) scale(1.01) }
     }
-    .text.hidden{ opacity: 0 }
+    .text.hidden{ opacity:0 }
 
-    /* Тост про «эпоху дня» (не обязателен) */
+    /* Тост (как раньше) */
     .toast{
       position: fixed; right: 20px; bottom: 20px;
       background: rgba(255,186,8,.95); color:#111;
@@ -103,21 +90,17 @@
       z-index: 9999;
     }
     .toast.show{ opacity:1; transform: translateY(0) }
-    .toast button{
-      margin-left:10px; background:none; border:none; font-size:16px; cursor:pointer; color:#111; font-weight:900;
-    }
+    .toast button{ margin-left:10px; background:none; border:none; font-size:16px; cursor:pointer; color:#111; font-weight:900 }
   </style>
 </head>
 <body>
 
   <main class="frame" id="launch" aria-label="Запустить машину времени">
-    <!-- Картинка задаёт размеры -->
     <picture>
       <source srcset="timemachine.webp" type="image/webp" />
-      <img src="timemachine.png" alt="Машина времени" />
+      <img id="tmImage" src="timemachine.png" alt="Машина времени" />
     </picture>
 
-    <!-- Видео строго в тех же границах -->
     <video id="introVideo" preload="metadata" playsinline poster="timemachine.webp">
       <source src="intro.mp4" type="video/mp4" />
     </video>
@@ -133,7 +116,7 @@
   </div>
 
   <script>
-    // ===== Ваши ссылки (день 1..7) =====
+    // ===== ссылки (день 1..7) =====
     const LESSON_URLS = [
       "https://my.walk-walk.ru/pl/teach/control/lesson/view?id=344711518&editMode=0",
       "https://my.walk-walk.ru/pl/teach/control/lesson/view?id=344711519",
@@ -148,15 +131,26 @@
     const STORAGE_KEY_DAILY = "music_epochs_daily_v1";
 
     const frame     = document.getElementById("launch");
+    const img       = document.getElementById("tmImage");
     const video     = document.getElementById("introVideo");
     const textBlock = document.getElementById("textBlock");
     const toast     = document.getElementById("toast");
     const toastClose= document.getElementById("toastClose");
 
-    const todayStr = () => {
-      const d = new Date();
-      return d.toISOString().split("T")[0]; // YYYY-MM-DD
-    };
+    // === ГЛАВНЫЙ ФИКС: высота .frame = фактической высоте изображения ===
+    function syncFrameHeight(){
+      // используем реальные пиксели картинки
+      const h = img.getBoundingClientRect().height;
+      if (h > 0) frame.style.height = h + "px";
+    }
+    // пересчитываем при любых изменениях размера картинки
+    const ro = new ResizeObserver(syncFrameHeight);
+    ro.observe(img);
+    window.addEventListener("load", syncFrameHeight);
+    window.addEventListener("resize", syncFrameHeight);
+
+    // ===== логика уроков =====
+    const todayStr = () => new Date().toISOString().split("T")[0];
 
     function getSeen(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY_SEEN))||[] }catch{ return [] } }
     function saveSeen(arr){ localStorage.setItem(STORAGE_KEY_SEEN, JSON.stringify(arr)) }
@@ -178,39 +172,24 @@
     function getOrAssignTodayLessonUrl(){
       const today = todayStr();
       const daily = getDaily();
-
-      if (daily && daily.date === today && daily.url){
-        showToast();
-        return daily.url;
-      }
+      if (daily && daily.date === today && daily.url){ showToast(); return daily.url; }
 
       let remaining = getRemaining();
-      if (remaining.length === 0){
-        localStorage.removeItem(STORAGE_KEY_SEEN);
-        remaining = [...LESSON_URLS];
-      }
+      if (remaining.length === 0){ localStorage.removeItem(STORAGE_KEY_SEEN); remaining = [...LESSON_URLS]; }
       const url = pickRandom(remaining);
 
-      const seen = new Set(getSeen());
-      seen.add(url);
-      saveSeen([...seen]);
-
-      setDaily({ date: today, url });
-      showToast();
-      return url;
+      const seen = new Set(getSeen()); seen.add(url); saveSeen([...seen]);
+      setDaily({ date: today, url }); showToast(); return url;
     }
 
     function navigateTo(url){
-      try{
-        if (window.top && window.top !== window){
-          window.top.location.href = url; return;
-        }
-      }catch(_){} // cross-origin
+      try{ if (window.top && window.top !== window){ window.top.location.href = url; return; } }catch(_){}
       try{ window.location.assign(url) }catch(_){ window.open(url,"_blank") }
     }
 
-    // Старт: включаем видео и прячем текст
+    // Запуск
     frame.addEventListener("click", () => {
+      syncFrameHeight();                 // ещё раз на всякий случай
       video.classList.add("active");
       textBlock.classList.add("hidden");
 
@@ -220,13 +199,11 @@
       }, 3000);
 
       video.currentTime = 0;
-      video.play()
-        .then(()=>{/* ок */})
-        .catch(()=>{
-          clearTimeout(safetyTimer);
-          const url = getOrAssignTodayLessonUrl();
-          navigateTo(url);
-        });
+      video.play().then(()=>{}).catch(()=>{
+        clearTimeout(safetyTimer);
+        const url = getOrAssignTodayLessonUrl();
+        navigateTo(url);
+      });
 
       video.addEventListener("error", () => {
         clearTimeout(safetyTimer);
@@ -235,13 +212,12 @@
       }, { once:true });
     });
 
-    // Конец видео: переходим на «эпоху дня»
     video.addEventListener("ended", () => {
       const url = getOrAssignTodayLessonUrl();
       navigateTo(url);
     });
 
-    // Если эпоха на сегодня уже есть — показываем подсказчик при загрузке
+    // Если «эпоха дня» уже назначена — показать тост при загрузке
     (function(){
       const daily = getDaily();
       if (daily && daily.date === todayStr() && daily.url) showToast();
