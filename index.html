@@ -3,58 +3,60 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Машина времени</title>
+  <title>Машина времени — embed</title>
   <style>
-    :root{
-      --accent: #ffba08;
-    }
-    /* Сбрасываем влияние контейнеров платформы */
-    html,body{margin:0;padding:0;background:#000;color:#fff}
-    body{font-family:system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif}
+    /* Минимальные сбросы — БЕЗ полноэкранного 100vh */
+    html,body{margin:0;padding:0}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;color:#fff}
 
-    /* Рамка фиксированной пропорции: убираем «чёрные поля» */
+    /* Рамка подстраивается под высоту изображения */
     .frame{
-      width:100%;
-      max-width:900px;
-      margin:0 auto;
-      aspect-ratio: 16 / 9;       /* под ваше видео; можно 4/3 при другой пропорции */
-      position:relative;
-      cursor:pointer;
-      border-radius:12px;
-      overflow:hidden;
-      background:#000;            /* фон за медиаконтентом */
-    }
-    .media{
-      position:absolute; inset:0;
-      width:100%; height:100%;
-      object-fit: cover;          /* ключ: заполняем без полос */
-      display:block;
+      position: relative;
+      display: inline-block;     /* чтобы высота бралась от картинки */
+      width: 100%;
+      max-width: 900px;
+      line-height: 0;            /* убираем возможные «щели» */
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      background: transparent;   /* без чёрного фона вокруг */
     }
 
-    /* Видео поверх, но изначально прозрачно */
-    video.media{
-      opacity:0;
+    /* Картинка задаёт высоту блока */
+    .frame img{
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 12px;
+    }
+
+    /* Видео поверх картинки 1:1, без «приближения» */
+    .frame video{
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;         /* заполняем картинку без полос */
+      border-radius: 12px;
+      opacity: 0;
       transition: opacity .45s ease;
-      pointer-events:none;
+      pointer-events: none;
     }
-    video.media.active{
-      opacity:1;
-      pointer-events:auto;
-    }
+    .frame video.active{ opacity:1; pointer-events:auto }
 
-    /* Текст-подсказка с «электросвечением» */
+    /* Текст-подсказка с «электрическим» свечением */
     .text{
-      position:absolute;
-      left:50%;
-      max-width:min(85%, 800px);
-      padding:10px 16px;
+      position: absolute;
+      left: 50%;
+      max-width: min(85%, 800px);
+      padding: 10px 16px;
       background: rgba(0,0,0,.38);
       backdrop-filter: blur(3px);
-      border-radius:10px;
-      font-weight:700;
-      text-align:center;
-      line-height:1.35;
-      color:#fff;
+      border-radius: 10px;
+      font-weight: 700;
+      text-align: center;
+      line-height: 1.35;
+      color: #fff;
       text-shadow:
         0 0 6px rgba(255,186,8,.65),
         0 0 14px rgba(255,200,50,.35),
@@ -62,64 +64,61 @@
       transition: opacity .4s ease, transform .3s ease;
       transform: translateX(-50%);
       animation: pulseGlow 2.2s ease-in-out infinite;
-      /* читаемость поверх любого кадра */
       box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset;
     }
     @keyframes pulseGlow{
-      0%,100%{ text-shadow:0 0 6px rgba(255,186,8,.65),0 0 14px rgba(255,200,50,.35),0 0 28px rgba(255,220,90,.18) }
-      50%   { text-shadow:0 0 10px rgba(255,200,80,.9), 0 0 22px rgba(255,210,90,.55), 0 0 44px rgba(255,235,160,.35) }
+      0%,100%{text-shadow:0 0 6px rgba(255,186,8,.65),0 0 14px rgba(255,200,50,.35),0 0 28px rgba(255,220,90,.18)}
+      50%{text-shadow:0 0 10px rgba(255,200,80,.9),0 0 22px rgba(255,210,90,.55),0 0 44px rgba(255,235,160,.35)}
     }
 
-    /* Мобильные: компактнее и ниже, чтобы не перекрывать центр */
+    /* Мобайл: текст внизу и чуть мельче */
     @media (max-width: 768px){
       .text{
-        bottom:6%;
-        top:auto;
+        bottom: 6%;
+        top: auto;
         font-size: clamp(14px, 3.6vw, 18px);
         transform: translateX(-50%);
       }
     }
-    /* Десктоп: по центру кадра и крупнее */
+    /* Десктоп: строго по центру */
     @media (min-width: 769px){
       .text{
-        top:50%;
-        bottom:auto;
+        top: 50%;
+        bottom: auto;
         font-size: clamp(16px, 1.4vw, 22px);
         transform: translate(-50%, -50%);
       }
-      .frame:hover .text{ transform: translate(-50%, -50%) scale(1.01); }
+      .frame:hover .text{ transform: translate(-50%, -50%) scale(1.01) }
     }
-    .text.hidden{ opacity:0 }
+    .text.hidden{ opacity: 0 }
 
-    /* Тост про «эпоху дня» */
+    /* Тост про «эпоху дня» (не обязателен) */
     .toast{
-      position:fixed; right:20px; bottom:20px;
+      position: fixed; right: 20px; bottom: 20px;
       background: rgba(255,186,8,.95); color:#111;
       padding:12px 18px; border-radius:12px; font-size:14px; font-weight:700;
       box-shadow:0 6px 20px rgba(0,0,0,.4);
       opacity:0; transform: translateY(30px);
       transition: opacity .35s ease, transform .35s ease;
-      z-index:1000; pointer-events:none;
+      z-index: 9999;
     }
-    .toast.show{ opacity:1; transform: translateY(0); pointer-events:auto }
+    .toast.show{ opacity:1; transform: translateY(0) }
     .toast button{
       margin-left:10px; background:none; border:none; font-size:16px; cursor:pointer; color:#111; font-weight:900;
     }
-
-    /* Внешние контейнеры платформы иногда добавляют отступы — подстрахуемся */
-    .gc-reset, .lesson-container{ padding:0 !important; background:#000 !important }
   </style>
 </head>
 <body>
+
   <main class="frame" id="launch" aria-label="Запустить машину времени">
-    <!-- Картинка-превью: webp + png-запасной вариант -->
+    <!-- Картинка задаёт размеры -->
     <picture>
       <source srcset="timemachine.webp" type="image/webp" />
-      <img class="media" src="timemachine.png" alt="Машина времени" />
+      <img src="timemachine.png" alt="Машина времени" />
     </picture>
 
-    <!-- Видео строго той же области: без приближения и без полос -->
-    <video class="media" id="introVideo" preload="metadata" playsinline poster="timemachine.webp">
+    <!-- Видео строго в тех же границах -->
+    <video id="introVideo" preload="metadata" playsinline poster="timemachine.webp">
       <source src="intro.mp4" type="video/mp4" />
     </video>
 
@@ -145,7 +144,6 @@
       "https://my.walk-walk.ru/pl/teach/control/lesson/view?id=344711524",
     ];
 
-    // ===== Ключи хранения =====
     const STORAGE_KEY_SEEN  = "music_epochs_seen_v1";
     const STORAGE_KEY_DAILY = "music_epochs_daily_v1";
 
@@ -157,7 +155,7 @@
 
     const todayStr = () => {
       const d = new Date();
-      return d.toISOString().split("T")[0]; // YYYY-MM-DD (локальное упрощение)
+      return d.toISOString().split("T")[0]; // YYYY-MM-DD
     };
 
     function getSeen(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY_SEEN))||[] }catch{ return [] } }
@@ -171,20 +169,18 @@
     function getDaily(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY_DAILY))||null }catch{ return null } }
     function setDaily(obj){ localStorage.setItem(STORAGE_KEY_DAILY, JSON.stringify(obj)) }
 
-    // Ненавязчивый тост
     function showToast(){
       toast.classList.add("show");
       const t = setTimeout(()=>toast.classList.remove("show"), 5000);
       toastClose.onclick = ()=>{ clearTimeout(t); toast.classList.remove("show") }
     }
 
-    // Получаем или назначаем «эпоху дня»
     function getOrAssignTodayLessonUrl(){
       const today = todayStr();
       const daily = getDaily();
 
       if (daily && daily.date === today && daily.url){
-        showToast();  // уже назначено сегодня
+        showToast();
         return daily.url;
       }
 
@@ -204,31 +200,20 @@
       return url;
     }
 
-    // Безопасная навигация (в iframe и т.п.)
     function navigateTo(url){
-      try {
-        // Если мы внутри iframe того же домена, уходим верхним окном
-        if (window.top && window.top !== window) {
-          window.top.location.href = url;
-          return;
+      try{
+        if (window.top && window.top !== window){
+          window.top.location.href = url; return;
         }
-      } catch(_) { /* cross-origin — игнорируем */ }
-
-      // Попытка открыть в этом окне
-      try {
-        window.location.assign(url);
-      } catch(_) {
-        // Запасной вариант — новая вкладка (если политика разрешит)
-        window.open(url, "_blank");
-      }
+      }catch(_){} // cross-origin
+      try{ window.location.assign(url) }catch(_){ window.open(url,"_blank") }
     }
 
-    // Старт: видео поверх картинки, текст исчезает
+    // Старт: включаем видео и прячем текст
     frame.addEventListener("click", () => {
       video.classList.add("active");
       textBlock.classList.add("hidden");
 
-      // Если видео не началось (политика автоплея/ресурс не доступен) — через 3 сек уходим на урок
       let safetyTimer = setTimeout(() => {
         const url = getOrAssignTodayLessonUrl();
         navigateTo(url);
@@ -238,36 +223,26 @@
       video.play()
         .then(()=>{/* ок */})
         .catch(()=>{
-          // сразу уходим на урок при ошибке
           clearTimeout(safetyTimer);
           const url = getOrAssignTodayLessonUrl();
           navigateTo(url);
         });
 
-      // если видео началось, но потом ошибка воспроизведения
       video.addEventListener("error", () => {
         clearTimeout(safetyTimer);
         const url = getOrAssignTodayLessonUrl();
         navigateTo(url);
       }, { once:true });
-
-      // если пользователь поставил на паузу — всё равно уважаем лимит и ведём в урок по второму клику
-      frame.addEventListener("click", () => {
-        if (video.paused){
-          const url = getOrAssignTodayLessonUrl();
-          navigateTo(url);
-        }
-      }, { once:true });
     });
 
-    // Нормальное завершение: перейти на урок
+    // Конец видео: переходим на «эпоху дня»
     video.addEventListener("ended", () => {
       const url = getOrAssignTodayLessonUrl();
       navigateTo(url);
     });
 
-    // Опционально: если «эпоха дня» уже назначена — показать тост при загрузке
-    (function showToastIfAlreadyAssignedToday(){
+    // Если эпоха на сегодня уже есть — показываем подсказчик при загрузке
+    (function(){
       const daily = getDaily();
       if (daily && daily.date === todayStr() && daily.url) showToast();
     })();
